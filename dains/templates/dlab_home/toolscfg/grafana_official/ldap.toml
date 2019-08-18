@@ -1,0 +1,15 @@
+[[servers]]
+host = "$DLAB_DOMAIN_SHORT$"
+port = 389
+use_ssl = false
+start_tls = false
+ssl_skip_verify = false
+bind_dn = "cn=admin,dc=pl,dc=eso,dc=org"
+bind_password = 'admin'
+search_filter = "(cn=%s)"
+search_base_dns = ["ou=users,dc=pl,dc=eso,dc=org"]
+
+[servers.attributes]
+name = "givenName"
+surname = "sn"
+username = "cn"

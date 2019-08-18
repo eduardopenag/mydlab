@@ -1,0 +1,136 @@
+#!/bin/bash
+#
+# who        when        what
+# ---------  ----------  ----------------------------------------------
+# jgil       2019-05-29  Created
+
+
+# INSTRUCTIONS:
+#
+# To add a new option:
+# 1) Update "USAGE"
+# 2) Create a new "MAIN function"
+# 3) Call the new function from "Body"
+
+
+USAGE="$(cat << EOF
+Usage: dlab info WHAT
+
+Where WHAT could be any of:
+  all
+  services
+  running
+  snapshots
+  ports
+  env
+EOF
+)"
+
+
+# ------------------------------------------------------------------
+# --- MAIN functions -----------------------------------------------
+# ------------------------------------------------------------------
+info_all() {
+
+  echo "DATALAB $DLAB_NAME Ports"
+  echo "------------------------------"
+  info_ports
+  echo
+
+  echo "DATALAB $DLAB_NAME Environment"
+  echo "------------------------------"
+  info_env
+  echo
+
+  echo "DATALAB $DLAB_NAME Snapshots"
+  echo "------------------------------"
+  info_snapshots
+  echo
+
+  echo "DATALAB $DLAB_NAME Services"
+  echo "------------------------------"
+  info_services
+  echo
+
+  echo "DATALAB $DLAB_NAME Running services"
+  echo "------------------------------"
+  info_running_services
+  echo
+
+}
+
+
+info_running_services() {
+  echo "(Not Implemented yet)"
+}
+
+
+info_services() {
+  echo "Local services: $(get_local_services)"
+  echo "Docker stacks:  $(get_stack_services)"
+}
+
+info_snapshots() {
+  echo "(Not Implemented yet)"
+}
+
+info_ports() {
+  echo "(Not Implemented yet)"
+}
+
+info_env() {
+  env | grep DLAB_
+}
+
+
+
+# --- Ancillary functions ------------------------------------------
+cd $(dirname $0 ) && source ./datalab_envs.sh
+
+
+# --- Options processing -------------------------------------------
+# Mostly done in datalab_env.sh
+if [ $# = 0 ] ; then usage ; fi
+
+ARGUMENT=$1; shift
+REMAINDER=$@
+
+debug "ARGUMENT = $ARGUMENT"
+debug "Remaining args: $@"
+
+
+# --- Locks -------------------------------------------------------
+create_lock_file
+
+
+# ------------------------------------------------------------------
+# --- Body ---------------------------------------------------------
+# ------------------------------------------------------------------
+debug "Selecting what to run based on ARGUMENT=$ARGUMENT"
+case $ARGUMENT in
+     all)      
+          info_all
+          ;;
+     services)
+          info_services
+          ;;
+     snapshots)
+          info_snapshots
+          ;;
+     ports)
+          info_ports
+          ;;
+     env)
+          info_env
+          ;;
+     running)
+          info_running_services
+          ;;
+     *)
+          usage
+          ;;
+esac
+
+
+debug "$0 Normal exit"
+# -----------------------------------------------------------------

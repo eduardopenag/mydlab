@@ -1,0 +1,43 @@
+version: '3.3'
+
+services:
+
+  registry:
+    image: registry:2
+    ports:
+      - 5000:5000
+    #deploy:
+    #  replicas: 1
+    #  REGISTRY_HTTP_TLS_KEY: /certs/domain.key
+    #  REGISTRY_AUTH: htpasswd
+    #  REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+    #  REGISTRY_AUTH_HTPASSWD_REALM: Registry Realm
+    volumes:
+      - $DLAB_HOME$/registry:/var/lib/registry
+    networks:
+      - frontend
+      - backend
+
+  registry-browser:
+    image: klausmeyer/docker-registry-browser
+    environment:
+      - "DOCKER_REGISTRY_URL=http://registry:5000"
+    ports:
+      - 8085:8080
+    networks:
+      - frontend
+      - backend
+    deploy:
+      replicas: $DLAB_registry_browser_replicas$
+
+
+networks:
+  frontend:
+    driver: overlay
+    attachable: true
+  backend:
+    driver: overlay
+    attachable: true
+    ipam:
+      config:
+        - subnet: 10.0.23.0/24

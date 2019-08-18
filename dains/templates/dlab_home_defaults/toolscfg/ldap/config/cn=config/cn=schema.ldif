@@ -1,0 +1,12 @@
+# AUTO-GENERATED FILE - DO NOT EDIT!! Use ldapmodify.
+# CRC32 a455d949
+dn: cn=schema
+objectClass: olcSchemaConfig
+cn: schema
+structuralObjectClass: olcSchemaConfig
+entryUUID: abc00efc-2b2e-1039-93aa-834d4c74a505
+creatorsName: cn=admin,cn=config
+createTimestamp: 20190625004819Z
+entryCSN: 20190625004819.748800Z#000000#000#000000
+modifiersName: cn=admin,cn=config
+modifyTimestamp: 20190625004819Z

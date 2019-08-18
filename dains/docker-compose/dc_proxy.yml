@@ -1,0 +1,39 @@
+version: '3.3'
+
+services:
+
+  nginx-proxy:
+    image: webdevops/php-nginx
+    volumes:
+      - $DLAB_HOME$/toolscfg/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - $DLAB_HOME$/toolscfg/nginx/auth.conf:/etc/nginx/auth.conf:ro
+      - $DLAB_HOME$/toolscfg/nginx/services:/etc/nginx/services:ro
+      - $DLAB_HOME$/toolscfg/nginx/available:/etc/nginx/available:ro
+      - $DLAB_HOME$/datalake/apps/datalab/index.html:/www/index.html:ro
+      - $DLAB_HOME$/datalake/reports/html:/html_reports:ro
+      - $DLAB_HOME$/datalake/reports/html:/application/code:ro
+    ports:
+      - 80:80
+    networks:
+      - $DLAB_NAME$_registry_frontend
+    deploy:
+      replicas: 1
+
+  nginx-proxy-admin:
+    image: webdevops/php-nginx
+    volumes:
+      - $DLAB_HOME$/toolscfg/nginx_admin/nginx.conf:/etc/nginx/nginx.conf:ro
+      - $DLAB_HOME$/toolscfg/nginx_admin/auth.conf:/etc/nginx/auth.conf:ro
+      - $DLAB_HOME$/toolscfg/nginx_admin/services:/etc/nginx/services:ro
+      - $DLAB_HOME$/toolscfg/nginx_admin/available:/etc/nginx/available:ro
+      - $DLAB_HOME$/datalake/apps/datalab/index_admin.html:/www/index.html:ro
+    ports:
+      - 81:81
+    networks:
+      - $DLAB_NAME$_registry_frontend
+    deploy:
+      replicas: 1
+
+networks:
+  $DLAB_NAME$_registry_frontend:
+    external: true
