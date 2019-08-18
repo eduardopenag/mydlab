@@ -1,0 +1,76 @@
+version: '3'
+
+services:
+
+  viz:
+    image: dockersamples/visualizer 
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      replicas: $DLAB_viz_replicas$
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - $DLAB_NAME$_registry_frontend
+
+  portainer:     
+    image: portainer/portainer
+    user: "${UID}:${GID}"
+    command: -H unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - $DLAB_HOME$/toolscfg/portainer/data:/data
+    networks:
+      - $DLAB_NAME$_registry_frontend
+      - $DLAB_NAME$_registry_backend
+    deploy:
+      replicas: $DLAB_portainer_replicas$
+      placement:
+        constraints: [node.role == manager]
+
+  netdata:
+    image: netdata/netdata
+    hostname: "{{.Node.Hostname}}-{{.Service.Name}}"
+    restart: 'always'
+    ports:
+      - 19998:19999
+    cap_add:
+      - SYS_PTRACE
+    environment:
+      PGID: $DLAB_DOCKER_GROUP$
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - $DLAB_HOME$/toolscfg/netdata/netdata.conf:/etc/netdata/netdata.conf
+    networks:
+      - $DLAB_NAME$_registry_frontend
+    deploy:
+      mode: global
+
+  jupyterhub_admin:
+    image: $DLAB_DOMAIN_SHORT$:5000/jupyterhub_admin_vlt
+    build:
+      context: ./context/jupyterhub_admin:datalab_1.0
+    volumes:
+      - $DLAB_HOME$/toolscfg/jupyter_admin/hub:/srv/jupyterhub
+      - $DLAB_HOME$/home:/home
+      - $DLAB_HOME$/datalake:/datalake
+      - $DLAB_HOME$/toolscfg:/toolscfg
+      - $DLAB_BACKUPS$:/backups
+      - /diska/home/dlabmgr/.ssh:/tmp/.ssh
+    hostname: jupyterhub_admin
+#    ports:
+#      - 3012:3012
+    networks:
+      - $DLAB_NAME$_registry_frontend
+      - $DLAB_NAME$_registry_backend
+    deploy:
+      replicas: $DLAB_jupyter_admin_replicas$
+
+networks:
+  $DLAB_NAME$_registry_backend:
+    external: true
+  $DLAB_NAME$_registry_frontend:
+    external: true
+

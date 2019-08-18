@@ -1,0 +1,120 @@
+#!/bin/bash
+#
+# who        when        what
+# ---------  ----------  ----------------------------------------------
+# jgil       2019-05-28  Created
+
+
+# INSTRUCTIONS:
+#
+# To add a new option:
+# 1) Update "USAGE"
+# 2) Create a new "MAIN function"
+# 3) Call the new function from "Body"
+
+USAGE="$(cat << EOF
+Usage: dlab build [ all | SERVICE1 [ SERVICE2 ... ] ]
+
+    all: 
+        Build all services.
+
+    SERVICE:
+        Builds and push the specified service or services.
+EOF
+)"
+
+
+# ------------------------------------------------------------------
+# --- MAIN functions -----------------------------------------------
+# ------------------------------------------------------------------
+
+# --- build registry ----------------------------------------------------
+# build_registry() {
+#     verbose "Executing: bring up registry"
+#     dryExec docker stack deploy --compose-file docker-compose/dc_registry.yml ${DLAB_ELASTICNAME}-registry
+
+# } 
+
+
+# --- build and push image ---------------------------------------------
+build() {
+
+    image=$(basename $1); shift
+
+    if [[ ! "all registry" =~ $image ]]; then
+      verbose "Executing: dlab build $image"
+
+      build_image $image
+      push_image $image
+      pull_image_in_local $image
+    else
+      debug "Refusing to build $image ! next please."
+    fi
+
+    # Are there more arguments?
+    debug "Remaining args: $@"
+    if [[ "$@" != "" ]]; then 
+      build "$@"
+    fi
+}
+
+# --- build image IMAGENAME -------------------------------------
+build_image() {
+    [[ "all registry" =~ $1 ]] && return
+    verbose ". Build image $1"
+    dryExec docker-compose --log-level error --file docker-compose/dc_$1.yml build
+}
+
+# ---  push IMAGENAME ---------------------------------------------
+push_image() {
+    [[ "all registry" =~ $1 ]] && return
+    verbose ". Push image $1 into registry"
+    dryExec docker-compose --log-level error --file docker-compose/dc_$1.yml push
+}
+
+# ---  pull_in_local ---------------------------------------------
+pull_image_in_local() {
+  debug "To be done!"
+}
+
+# --- build all -------------------------------------
+build_all() {
+    debug "Invoked: dlab build all "
+    build $(get_stack_services)  
+}
+
+
+# --- Ancillary functions ------------------------------------------
+cd $(dirname $0 ) && source ./datalab_envs.sh
+
+# --- Options processing -------------------------------------------
+# Mostly done in datalab_env.sh
+if [ $# = 0 ] ; then usage ; fi
+
+ARGUMENT=$1; shift
+REMAINDER=$@
+
+debug "ARGUMENT = $ARGUMENT"
+# debug "Remaining args: $@"
+
+# --- Locks -------------------------------------------------------
+create_lock_file
+
+
+# ------------------------------------------------------------------
+# --- Body ---------------------------------------------------------
+# ------------------------------------------------------------------
+case $ARGUMENT in
+     all)      
+          build_all
+          ;;
+     *)
+          build $ARGUMENT $REMAINDER
+          ;;
+esac
+
+verbose "WARNING: Decide what to pull in local nodes."  
+
+
+debug "$0 Normal exit"
+# --------------------------

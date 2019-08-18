@@ -1,0 +1,165 @@
+#!/bin/bash
+#
+# who        when        what
+# ---------  ----------  ----------------------------------------------
+# jgil       2019-05-29  Created
+
+
+# INSTRUCTIONS:
+#
+# To add a new option:
+# 1) Update "USAGE"
+# 2) Create a new "MAIN function"
+# 3) Call the new function from "Body"
+
+
+USAGE="$(cat << EOF
+Usage: dlab stop [ all | SERVICE1 [ SERVICE2 ... ] ]
+
+    all: 
+        Stop all services in order.
+
+    SERVICE:
+        Stop the specified service or services
+
+EOF
+)"
+
+
+# ------------------------------------------------------------------
+# --- MAIN functions -----------------------------------------------
+# ------------------------------------------------------------------
+
+# --- stop local service ----------------------------------------------------
+stop_local() {
+    IP_SUFFIX=1
+    for host in $( echo "$DLAB_NODES" | tr "," " " ); do
+      if [ "$1" == "cassandra" ]; then
+        dryExec ssh $host "IP_SUFFIX=$IP_SUFFIX docker exec cassandra-$IP_SUFFIX nodetool drain || true"
+        dryExec ssh $host "IP_SUFFIX=$IP_SUFFIX docker-compose -f $(pwd)/docker-compose/dc_$1.yml down || true"
+      elif [[ "$1" == "elassandra" ]]; then
+        dryExec ssh $host "IP_SUFFIX=$IP_SUFFIX docker exec elassandra-$IP_SUFFIX nodetool drain || true"
+        dryExec ssh $host "IP_SUFFIX=$IP_SUFFIX docker-compose -f $(pwd)/docker-compose/dc_$1.yml down || true"
+      else
+        dryExec ssh $host "HOSTAME=$host docker-compose -f $(pwd)/docker-compose/dc_$1.yml down || true"
+      fi
+      IP_SUFFIX=$(( $IP_SUFFIX + 1 ))
+    done
+}
+
+# --- stop stack service ----------------------------------------------------
+stop_stack() {
+  # The stack name is inferred from dc_XXX.yml name, and is ${DLAB_ELASTICNAME}-XXX.
+  dryExec docker stack rm ${DLAB_NAME}_$service || true
+
+  PROXY_MODIFIED=No
+
+  # Do we need to modify in PUBLIC proxy?
+  SHORT=$DLAB_HOME/toolscfg/nginx
+  if ls $SHORT/services/$service* &>/dev/null; then
+    debug "Hey, there is a public proxy file to modify"
+    dryExec rm -f $SHORT/available/$service.up.conf
+    dryExec rm -f $SHORT/available/$service.sv.conf
+    PROXY_MODIFIED=Yes
+  fi
+  
+  # Do we need to modify in ADMIN proxy?
+  SHORT=$DLAB_HOME/toolscfg/nginx_admin
+  if ls $SHORT/services/$service* &>/dev/null; then
+    debug "Hey, there is a admin proxy file to modify"
+    dryExec rm -f $SHORT/available/$service.up.conf
+    dryExec rm -f $SHORT/available/$service.sv.conf
+    PROXY_MODIFIED=Yes
+  fi
+
+  # Now restart proxy
+  # WE BELIEVE THAT IS NOT NEEDED BUT HERE IT IS ANYWAY
+  #if [[ "$PROXY_MODIFIED" == "Yes" ]]; then
+  #  debug "Restarting proxy because service $service"
+  #  dryExec dlab $ORIGINAL_PARAM stop proxy
+  #  start proxy
+  #fi
+
+  
+}
+
+# --- start service ----------------------------------------------------
+stop() {
+    verbose "Executing: dlab stop $1"
+    debug "PARAMS = $@"
+    service=$1; shift
+
+    if [[ "$(get_local_services)" =~ $service ]]; then
+      stop_local $service
+    elif [[ "$(get_stack_services)" =~ $service ]]; then
+      stop_stack $service
+    else
+      exitMsg "service $service not found"
+    fi
+
+    # Are there more services to stop?
+    if [[ "$@" != "" ]]; then stop "$@"; fi
+} 
+
+
+# --- stop all ----------------------------------------------------
+stop_all() {
+    debug "Invoked: dlab stop all (except registry)"
+    WHAT_TO_STOP=$(echo $(get_local_services) $(get_stack_services) | sed 's/registry//g' )
+    debug "WHAT_TO_STOP=$WHAT_TO_STOP"
+    stop $WHAT_TO_STOP
+}
+
+
+# --- Ancillary functions ------------------------------------------
+cd $(dirname $0 ) && source ./datalab_envs.sh
+
+
+# --- Options processing -------------------------------------------
+# Mostly done in datalab_env.sh
+if [ $# = 0 ] ; then usage ; fi
+
+ARGUMENT=$1; shift
+REMAINDER=$@
+
+debug "ARGUMENT = $ARGUMENT"
+debug "Remaining args: $@"
+
+
+# --- Locks -------------------------------------------------------
+create_lock_file
+
+
+# ------------------------------------------------------------------
+# --- Body ---------------------------------------------------------
+# ------------------------------------------------------------------
+debug "Selecting what to run based on ARGUMENT=$ARGUMENT"
+case $ARGUMENT in
+     all)      
+          stop_all
+          ;;
+     *)
+          stop $ARGUMENT
+          ;;
+esac
+
+
+# If there are more arguments... call me recursively.
+
+#REMAINDER=$(echo "$REMAINDER" | sed s/"$ARGUMENT"//g )
+#debug "Remaining args after executing $ARGUMENT $REMAINDER"
+
+#if [[ $(echo "$REMAINDER" | awk '{print NF}' ) > 0 ]]; then
+#    debug "Continuing, after removing $LOCK_FILE"
+
+#    remove_lock_file
+#    ifDebug set -x
+#    bash $(basename $0) $ORIGINAL_PARAMS $REMAINDER
+#    set +x
+#fi
+
+
+
+
+debug "$0 Normal exit"
+# -----------------------------------------------------------------

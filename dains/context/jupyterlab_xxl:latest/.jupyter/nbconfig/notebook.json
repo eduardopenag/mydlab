@@ -1,0 +1,57 @@
+{
+  "load_extensions": {
+    "nbextensions_configurator/config_menu/main": true,
+    "contrib_nbextensions_help_item/main": true,
+    "plotlywidget/extension": true,
+    "jupyter-js-widgets/extension": true,
+    "appmode/main": true,
+    "nbpresent/js/nbpresent.min": true,
+    "nbtutor/js/nbtutor.min": true,
+    "execute_time/ExecuteTime": true,
+    "toc2/main": true,
+    "python-markdown/main": true,
+    "spellchecker/main": true,
+    "hide_input_all/main": true,
+    "table_beautifier/main": false,
+    "hide_input/main": true,
+    "cell_filter/cell_filter": true,
+    "splitcell/splitcell": true,
+    "init_cell/main": true,
+    "snippets_menu/main": true,
+    "ruler/main": false,
+    "datestamper/main": true,
+    "collapsible_headings/main": false,
+    "code_prettify/autopep8": true,
+    "code_font_size/code_font_size": true,
+    "execution_dependencies/execution_dependencies": true,
+    "snippets/main": true,
+    "varInspector/main": true,
+    "autosavetime/main": true,
+    "code_prettify/code_prettify": true,
+    "code_prettify/isort": true,
+    "export_embedded/main": true,
+    "highlighter/highlighter": true,
+    "limit_output/main": true
+  },
+  "toc2": {
+    "threshold": "2",
+    "skip_h1_title": true,
+    "toc_cell": false
+  },
+  "ruler_column": [
+    "90"
+  ],
+  "Notebook": {
+    "Header": true,
+    "Toolbar": true
+  },
+  "Cell": {
+    "cm_config": {
+      "lineNumbers": true
+    }
+  },
+  "rise": {
+    "header": "",
+    "backimage": "../datalake/library/images/ESO_slideTemplate4DataLab.png"
+  }
+}

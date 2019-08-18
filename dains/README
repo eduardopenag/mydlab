@@ -1,0 +1,109 @@
+# who        when        what
+# ---------  ----------  ----------------------------------------------
+# jgil       2019-05-24  new layout
+# epena      2019-04-17  created
+
+This module provides a basic DATALAB installation with default configuration based on Paranal DATALAB in the state that it was at May, 2019. Also, it provides mechanisms for restore BACKUPS and SNAPSHOTS.
+
+
+DataLab Underlying Infrastructure Requirements
+----------------------------------------------
+* Docker Swarm installed and initialized
+* A common file system already deployed usually GlusterFS
+* A docker privileged (not root) user account (usually dlabmgr)
+* Docker "insecure registry" configured, normally in /etc/docker/daemon.json
+* Elastic host modifications in place
+* passwordless access between nodes: ssh $DLAB_USER@DLAB_NODE
+* /opt/anaconda3 installed in all host machines
+* docker version XXX and up
+* docker-compose compatible with 3.3 compose files. 
+* Insecure registry must be enabled for DLAB_DOMAIN_SHORT
+* subdomains already configured: kibana, kairos, ldap, grafana. Alternatively... you can modify your own /etc/hosts adding kibana.$DLAB_DOMAIN_SHORT and so on.
+* Docker will fill up you / , then you MUST use a sym link to a bigger disc. 
+* Turn off swappiness. VICENTE TO COMMENT HERE.
+
+References:
+https://linuxize.com/post/how-to-install-and-use-docker-compose-on-centos-7/
+
+Installing a DataLab:
+---------------------
+Notes:
+
+* The files *_env.sh define a particular DataLab, this is done by defining values for a set of environment variables. Before running any DataLab managemnet script, the environment must be choosen by running the correspoending *_env.sh
+* For Paranal DATALAB, use the value DLAB_ENVFILE=paranal_datalab_env.sh
+
+To install DATALAB follow the following steps:
+
+1) In any cluster node, do a clean checkout of /trunk/ParanalSWG/DATALAB/dains in some SRC directory.
+
+2) Select the environment in DLAB_ENVFILE for example:
+
+  export DLAB_ENVFILE=paranal_datalab_env.sh 
+
+3) Build and install Datalab files into your host 
+
+  make clean all install 
+
+4) Start Datalab using dlab command line
+
+  # Start a local registry
+  dlab start registry
+
+  # Build the images and push into registry
+  dlab build all
+
+  # Optionally... restore any backup or snapshot
+  #dlab snapshot restore all
+
+  # Start all services
+  dlab start all
+
+5) Test Datalab in your browser: 
+
+  open http://$DLAB_DOMAIN_SHORT:80/
+
+
+Makefile options
+----------------
+
+make clean:
+  Delete temporary files in SRC directory
+
+make all:
+  Alias for make clean check_requirements build
+
+make install:
+  Alias for make install_templates build_images (NOT INCLUDE deploy_stacks)
+
+make check_requirements:
+  Verify that the environment defined in DLAB_ENVFILE is prepared for DATALAB
+
+make build:
+  Prepare the templates and binaries in SRC/ based on your DLAB_ENVFILE
+
+make install_templates:
+  Copy (or overrides) the toolscfg and binaries into DLAB_HOME (see default_env.sh 
+  for more details).
+
+make fresh_install:
+  Deletes any DATALAB installation in your cluster, *including the data*, and starts 
+  from scratch. Use at your own risk.
+
+
+
+Managing Datalab
+----------------
+
+All the commands must be executed by $DLAB_USER using the dlab command
+
+  su - $DLAB_USER
+  dlab -h
+
+  dlab build [ all | SERVICE ]
+  dlab start [ all | SERVICE ]
+  dlab stop [ all | SERVICE ]
+  dlab snapshot [ create | restore ]
+  dlab info [ services | snapshots | ports | env]
+
+
+

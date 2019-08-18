@@ -1,0 +1,50 @@
+version: '3.3'
+
+services:
+    
+  grafana:
+    image: $DLAB_DOMAIN_SHORT$:5000/grafana_xxl:latest
+    user: "${UID}:${GID}"
+    volumes:
+      - $DLAB_HOME$/toolscfg/grafana_official/grafana.db:/var/lib/grafana/grafana.db
+      - $DLAB_HOME$/toolscfg/grafana_official/grafana.ini:/etc/grafana/grafana.ini
+      - $DLAB_HOME$/toolscfg/grafana_official/ldap.toml:/etc/grafana/ldap.toml
+    networks:
+      - $DLAB_NAME$_registry_frontend
+      - $DLAB_NAME$_registry_backend
+    deploy:
+      replicas: $DLAB_grafana_replicas$
+ 
+  kibana:
+    image: $DLAB_DOMAIN_SHORT$:5000/kibana_no_xpack:6.2
+    build:
+      context: ./context/kibana_no_xpack:6.2
+    environment:
+      - ELASTICSEARCH_URL="http://$DLAB_DOMAIN_SHORT$:9200"
+    volumes:
+      - $DLAB_HOME$/toolscfg/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml
+    networks:
+      - $DLAB_NAME$_registry_frontend
+    deploy:
+      replicas: $DLAB_kibana_replicas$  
+
+  grafana_pg:
+    image: $DLAB_DOMAIN_SHORT$:5000/grafana_xxl:latest
+    build:
+      context: ./context/grafana_xxl:latest
+    user: "${UID}:${GID}"
+    volumes:
+      - $DLAB_HOME$/toolscfg/grafana_playground/grafana.db:/var/lib/grafana/grafana.db
+      - $DLAB_HOME$/toolscfg/grafana_playground/grafana.ini:/etc/grafana/grafana.ini
+      - $DLAB_HOME$/toolscfg/grafana_playground/ldap.toml:/etc/grafana/ldap.toml
+    networks:
+      - $DLAB_NAME$_registry_frontend
+      - $DLAB_NAME$_registry_backend
+    deploy:
+      replicas: $DLAB_grafana_pg_replicas$
+
+networks:
+  $DLAB_NAME$_registry_backend:
+    external: true
+  $DLAB_NAME$_registry_frontend:
+    external: true

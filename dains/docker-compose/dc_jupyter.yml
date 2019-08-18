@@ -1,0 +1,47 @@
+version: '3.3'
+
+services:
+
+  # JUPYTER PLAYGROUND
+  jupyterhub:
+    image: $DLAB_DOMAIN_SHORT$:5000/jupyterhub_swarm
+    build:
+      context: ./context/jupyterhub-swarm
+    hostname: jupyterhub
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - $DLAB_HOME$/toolscfg/jupyter_playground/hub:/srv/jupyterhub
+    networks:
+      - $DLAB_NAME$_registry_frontend
+    environment:
+      DOCKER_NETWORK_NAME: $DLAB_NAME$_registry_frontend
+    deploy:
+      replicas: 1
+      placement:
+        constraints: [node.role == manager]
+
+  conda_vlt_base_build:
+    image: $DLAB_DOMAIN_SHORT$:5000/vlt-conda-base
+    build:
+      context: ./context/vlt-conda-base
+    deploy:
+      replicas: 0
+
+  # this image is for building and pushing only
+  # in order to be used by SwarmSpawner
+  notebook_image:
+    image: $DLAB_DOMAIN_SHORT$:5000/jupyterhub_singleuser_vlt
+    build:
+      context: ./context/vlt-conda-single
+    networks:
+      - $DLAB_NAME$_registry_frontend
+      - $DLAB_NAME$_registry_backend
+    deploy:
+      replicas: 0
+
+networks:
+  $DLAB_NAME$_registry_backend:
+    external: true
+  $DLAB_NAME$_registry_frontend:
+    external: true
+

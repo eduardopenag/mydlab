@@ -1,0 +1,49 @@
+[ ] templates/..../elasticsearch.yml:
+Parametrize it.
+
+[ ] LDAP:
+Parametrize, and search a way to avoid ESO dependance.
+
+[ ] Permissions:
+Check all permisions in templates/ dirs & files
+
+[ ] Nginx multiple domains
+Address how to parametrize multiple domain for same datalab, see datalab/paranaldatalab/msedatalab for example.
+
+[ ] Default data files
+Provide default grafana.db and maybe other files for a brand new DATALAB
+
+[ ] Containers changes dir permissions. Example: empty LDAP is filled with something that $DLAB_USER cannot modify later.
+
+
+epena
+-----
+
+[ ] make build for tools in github. e.g. ldap server and prometheus-es-
+     git clone https://github.com/pwillie/prometheus-es-adapter.git .../context/prometheus-es-adapter:v6
+
+[ ] replace index.html pages by generic ones which will be replaced by the Paranal page 
+
+[ ] dlabmgr jupyter home should not be empty by default. Copy some admin notebooks in folders?
+
+[ ] Cassandra IP address hardcode to 11 and also kairosDB config file. Must be changed for multiple nodes install
+
+[ ] .../home/dlabmgr permission to 1000:users
+
+[ ] change default password of dlabmgr in ldap
+
+[ ] add public keys to jupyter admin docker to send commans to the hosts
+
+[ ] snapshots:    
+       LDAP --> data exported using phsLadpAdmin to .csv
+           or check: https://github.com/osixia/docker-openldap-backup
+       LDAP password default is admin (shoud be changed after install). 
+       grafana: archive empty db and than use wizzy to restore snapshots (x2)
+       /data/distributed/datalake/libaries
+       /data/distributed/datalake/reports/html/images
+       APP dlab (index, admin_index, ldap users, )
+	Jupyter_admin: missing extensions, particularly embeded_html
+       cronicle
+[ ] nginx config still use the domain pl.eso.org
+
+

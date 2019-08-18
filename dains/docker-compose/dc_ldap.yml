@@ -1,0 +1,53 @@
+version: '3.3'
+
+services:
+
+  ldap-server:
+    image: $DLAB_DOMAIN_SHORT$:5000/ldap-server
+    build:
+      context: ./context/docker-openldap
+      args:
+        - LDAP_OPENLDAP_UID=$DLAB_USERID$
+        - LDAP_OPENLDAP_GID=$DLAB_GROUPID$
+    environment:
+      - LDAP_ORGANISATION=ESO
+      - LDAP_DOMAIN=pl.eso.org
+      # Important for data persistency
+      - LDAP_REMOVE_CONFIG_AFTER_SETUP=false
+      - KEEP_EXISTING_CONFIG=true
+    volumes:
+      - $DLAB_HOME$/toolscfg/ldap/data:/var/lib/ldap
+      - $DLAB_HOME$/toolscfg/ldap/config:/etc/ldap/slapd.d
+    ports:
+      - 389:389
+      - 636:636
+    networks:
+      - $DLAB_NAME$_registry_frontend
+    deploy:
+      replicas: 1
+
+  nginx-ldap-auth:
+    image: $DLAB_DOMAIN_SHORT$:5000/nginx-ldap-auth
+    build:
+      context: ./context/nginx-ldap-auth
+    networks:
+      - $DLAB_NAME$_registry_frontend
+    deploy:
+      replicas: 1  
+
+  ldap-admin:
+    image: rschaeuble/phpldapadmin
+    environment:
+      - LDAP_URL=ldap://ldap-server
+      - LDAP_BASE="dc=pl,dc=eso,dc=org"
+      - LDAP_ADMIN="cn=admin,dc=pl,dc=eso,dc=org"
+    ports:
+      - 8082:80
+    networks:
+      - $DLAB_NAME$_registry_frontend
+    deploy:
+      replicas: $DLAB_phpldapadmin_replicas$  
+
+networks:
+  $DLAB_NAME$_registry_frontend:
+    external: true

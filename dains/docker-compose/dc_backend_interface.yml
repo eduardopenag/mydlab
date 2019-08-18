@@ -1,0 +1,64 @@
+version: '3.3'
+
+services:
+
+  cerebro:
+    image: yannart/cerebro:latest
+    networks:
+      - $DLAB_NAME$_registry_frontend
+      - $DLAB_NAME$_registry_backend
+    deploy:
+      replicas: $DLAB_cerebro_replicas$
+
+  kairosdb:
+    image: $DLAB_DOMAIN_SHORT$:5000/kairosdb:latest
+    build:
+      context: ./context/kairosdb:1.2.1-1
+    volumes:
+      - $DLAB_HOME$/toolscfg/kairosdb/conf/kairosdb.properties:/kairosdb/conf/kairosdb.properties
+    ports:
+      - 4242:4242
+      - 8080:8080
+    networks:
+      - $DLAB_NAME$_registry_backend
+      - $DLAB_NAME$_registry_frontend
+    deploy:
+      replicas: $DLAB_kairosdb_replicas$
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - $DLAB_HOME$/toolscfg/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - $DLAB_NAME$_registry_backend
+      - $DLAB_NAME$_registry_frontend
+    deploy:
+      replicas: $DLAB_prometheus_replicas$
+
+  prometheus-es-adapter:
+    image: $DLAB_DOMAIN_SHORT$:5000/prometheus-es-adapter:v6
+    build:
+      context: ./context/prometheus-es-adapter:v6
+    ports:
+      - '8000:8000'
+      - '8001:9000'
+    environment:
+      - ES_URL=http://$DLAB_DOMAIN_LONG$:9200
+     # - ES_INDEX_DAILY=true
+     # - ES_INDEX_SHARDS=1
+     # - ES_INDEX_REPLICAS=0
+     # - ES_INDEX_MAX_DOCS=2000
+     #- DEBUG=true
+    networks:
+      - $DLAB_NAME$_registry_backend
+      - $DLAB_NAME$_registry_frontend
+    deploy:
+      replicas: $DLAB_prometheus_replicas$
+
+networks:
+  $DLAB_NAME$_registry_backend:
+    external: true
+  $DLAB_NAME$_registry_frontend:
+    external: true

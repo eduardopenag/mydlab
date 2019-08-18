@@ -1,0 +1,92 @@
+#!/bin/bash
+#
+# who        when        what
+# ---------  ----------  ----------------------------------------------
+# jgil       2019-06-09  Created
+
+
+# INSTRUCTIONS:
+#
+# To add a new option:
+# 1) Update "USAGE"
+# 2) Create a new "MAIN function"
+# 3) Call the new function from "Body"
+
+
+USAGE="$(cat << EOF
+Usage: dlab restart [ all | SERVICE1 [ SERVICE2 ... ] ]
+
+    all: 
+        Restart all services in order.
+
+    SERVICE:
+        Restart the specified service or services.
+
+EOF
+)"
+
+
+# ------------------------------------------------------------------
+# --- MAIN functions -----------------------------------------------
+# ------------------------------------------------------------------
+
+
+
+# --- restart service ----------------------------------------------------
+restart() {
+    verbose "Executing: dlab restart $1"
+    debug "PARAMS = $@"
+    service=$1; shift
+
+    bash stop $ORIGINAL_PARAMS $service
+    bash start $ORIGINAL_PARAMS $service
+
+
+    # Are there more services to restart?
+    if [[ "$@" != "" ]]; then restart "$@"; fi
+} 
+
+
+# --- restart all ----------------------------------------------------
+restart_all() {
+    debug "Invoked: dlab restart all (except registry)"
+    restart $(get_local_services) $(get_stack_services)
+}
+
+
+# --- Ancillary functions ------------------------------------------
+cd $(dirname $0 ) && source ./datalab_envs.sh
+
+
+# --- Options processing -------------------------------------------
+# Mostly done in datalab_env.sh
+if [ $# = 0 ] ; then usage ; fi
+
+ARGUMENT=$1; shift
+REMAINDER=$@
+
+debug "ARGUMENT = $ARGUMENT"
+debug "Remaining args: $@"
+
+
+# --- Locks -------------------------------------------------------
+create_lock_file
+
+
+# ------------------------------------------------------------------
+# --- Body ---------------------------------------------------------
+# ------------------------------------------------------------------
+debug "Selecting what to run based on ARGUMENT=$ARGUMENT"
+case $ARGUMENT in
+     all)      
+          restart_all
+          ;;
+     *)
+          restart $ARGUMENT
+          ;;
+esac
+
+
+
+debug "$0 Normal exit"
+# -----------------------------------------------------------------

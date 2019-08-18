@@ -1,0 +1,89 @@
+#!/bin/bash
+#
+# who        when        what
+# ---------  ----------  ----------------------------------------------
+# jgil       2019-05-27  created, based on https://stackoverflow.com/questions/14008125/shell-script-common-template
+
+
+USAGE="$(cat << EOF
+Usage: [ -v ] [ -h ] COMMAND ARGS
+
+Modifiers:
+  -v   Verbose
+  -q   Quiet
+  -n   Dry-run 
+  -d   Debug mode
+  -h   This help
+
+Commands: (For help in 'command', type 'dlab command')
+  build:
+    Build images in DATALAB.
+    
+  info:  # PENDING
+    Display information on various aspects of Datalab.
+
+  start:
+    Deploy stacks or containers into Datalab. If the image is not built yet, 
+    build it. It also pushes to local registry if it does not exist.
+
+  stop:
+    Stop Datalab services. 
+
+  snapshot:  # PENDING
+
+Examples:
+
+EOF
+)"
+
+
+# --- Ancillary functions ------------------------------------------
+cd $(dirname $0 ) && source ./datalab_envs.sh
+
+# Show debug info
+for i in $(env | grep DLAB); do debug "$i"; done
+
+
+# --- Option processing -------------------------------------------
+# Mostly done in datalab_env.sh
+
+if [[ $# < 1 ]]; then usage $2; fi
+
+COMMAND_NAME=$(basename $1)
+shift
+
+debug "COMMAND_NAME = $COMMAND_NAME"
+if [ ! -e $COMMAND_NAME ]; then exitMsg "$COMMAND_NAME is not a recognized command"; fi 
+
+
+# --- Locks -------------------------------------------------------
+create_lock_file
+
+# ------------------------------------------------------------------
+# --- Body ---------------------------------------------------------
+# ------------------------------------------------------------------
+
+# Call the command by calling a script with same name.
+if [[ "$DRYMODE" == "1" ]]; then
+  dryExec "-------------------------------------------"
+  dryExec "           Dry run mode is on"
+  dryExec "      All the commands shall be shown"
+  dryExec "          Nothing will be done"
+  dryExec "                                    - Basho"
+  dryExec "-------------------------------------------"
+fi
+
+
+case $COMMAND_NAME in
+     help)      
+          usage $1
+          ;;
+     *)
+          bash $COMMAND_NAME $ORIGINAL_PARAMS $@
+          ;;
+esac
+
+
+
+# -----------------------------------------------------------------
+debug "$0 Normal exit"

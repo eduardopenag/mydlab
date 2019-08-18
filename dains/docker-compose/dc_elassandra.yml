@@ -1,0 +1,26 @@
+version: '3.3'
+
+services:
+
+  cassandra:
+    container_name: cassandra-${IP_SUFFIX}
+    image: strapdata/elassandra
+    networks:
+      $DLAB_NAME$_registry_backend:
+        ipv4_address: 10.0.23.1${IP_SUFFIX}
+    ports:
+      - "$DLAB_elassandra_ES_http_port$:9200"
+      - "$DLAB_elassandra_ES_transport_port$:9300"
+    environment:
+      - CASSANDRA_LISTEN_ADDRESS=10.0.23.1${IP_SUFFIX}
+      - CASSANDRA_SEEDS=10.0.23.11
+      - CASSANDRA_DAEMON=org.apache.cassandra.service.$DLAB_cassandra_daemon$Daemon
+    volumes:
+      #- $DLAB_HOME$/toolscfg/cassandra/jvm.options:/etc/cassandra/jvm.options
+      - $DLAB_LOCAL$/cassandra/data:/var/lib/cassandra/data
+      - $DLAB_LOCAL$/cassandra/elasticsearch.data:/var/lib/cassandra/elasticsearch.data
+      - $DLAB_FASTLOCAL$/cassandra/commitlog:/var/lib/cassandra/commitlog
+
+networks:
+  $DLAB_NAME$_registry_backend:
+    external: true
